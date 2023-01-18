@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, ::before, ::after {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.btn--primary {
+    @apply bg-slate-400 rounded-2xl px-4 py-1 m-1 h-auto text-white;
+}
+.btn--secondary {
+    @apply border-slate-400 border-2 border-solid bg-white text-black px-4 py-1 m-1 h-auto rounded-2xl;
+}
