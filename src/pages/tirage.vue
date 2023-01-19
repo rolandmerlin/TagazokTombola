@@ -7,6 +7,8 @@
         <div v-if="mode=='select'">
             <div v-if="tirageOn" class="text-center">
                 <div class="font-bold text-center">Un précédent tirage a été effectué</div><br>
+                <b>Check Sum : {{ checkSum }}</b><br>
+                &nbsp;<br>
                 <button class="btn--secondary" v-on:click="Listing()">Liste</button> &nbsp;
                 <button class="btn--primary" v-on:click="RandStepByStep()">Affichage randomisé</button>
                 <button class="btn--primary" v-on:click="resetTirage()">Reset tirage</button>
@@ -14,7 +16,6 @@
             <div v-else class="text-center">
                 <div class="font-bold text-center">Aucun tirage</div><br>
                 <button class="btn--primary" v-on:click="LunchAndStep()">Lancer un tirage pas à pas</button>
-                <button class="btn--primary" v-on:click="LunchAndRandListing()">Lancer un tirage intégral, affichage randomisé</button>
             </div>
             <br>
             <hr>            
@@ -31,8 +32,8 @@
             </div>
         </div>
         <div v-if="mode=='randStep'">
-            <div class="text-center bg-gray-200 p-10">
-                    Ticket : # {{ step }}<br/>
+            <div class="text-center bg-gray-200 p-10 m-auto w-1/2">
+                    Ticket : # {{ step + 1 }}<br/>
                     &nbsp;<br/>
                     <span class="text-center p-2 font-bold text-2xl">{{ PlayerN(currentRandTirage[1]) }}</span><br/>
                     &nbsp;<br/>
@@ -55,7 +56,19 @@ const store = useStore()
 
 const tirage = computed(()=> store.getters.tirage)
 const tirageOn = computed(()=> store.getters.tirage.length)
-const resetTirage = () => store.commit('set_tirage',[])
+const checkSum = computed(()=> {
+    let sum = 0
+    for(let t of store.getters.tirage){
+        sum+= t[4]
+    }
+    return sum
+})
+const resetTirage = async() => {
+    store.commit('set_tirage',[])
+    await axios
+        .get('api/makeTirage',{'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Expires': '0'})
+        .then(d=>{ store.commit('set_tirage',d.data) })
+}
 const currentRandTirage = computed( () => store.getters.randtirage[step.value] )
 
 const step = ref(0)
@@ -87,7 +100,10 @@ function PlayerNumTicketN(n){ return store.getters.participants[n].jticket; }
 
 function PlayerCount(){ return store.getters.participants.length }
 
-async function LancerLeTirage(){ await axios.get('api/makeTirage',{'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Expires': '0'}).then(d=>{ store.commit('set_tirage',d.data) }) }
+async function LancerLeTirage(){
+    let d = await axios.get('api/makeTirage',{'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Expires': '0'})
+    store.commit('set_tirage',d.data)
+}
 
 function StepByStep(){
     step.value = 0
@@ -145,7 +161,7 @@ function Listing(){ mode.value = 'listing' }
 
 async function LunchAndStep(){
     await LancerLeTirage()
-    StepByStep()
+    RandStepByStep()
 }
 
 async function LunchAndRandListing(){
